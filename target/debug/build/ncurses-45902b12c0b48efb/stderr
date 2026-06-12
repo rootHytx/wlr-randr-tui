@@ -1,5 +1,0 @@
-In file included from /nix/store/15h9askp4k1lx44d9871wid23j2a8ijp-glibc-2.42-61-dev/include/assert.h:35,
-                 from /home/hytx/scripts/wlr-randr-tui/target/debug/build/ncurses-45902b12c0b48efb/out/chtype_size.c:2:
-/nix/store/15h9askp4k1lx44d9871wid23j2a8ijp-glibc-2.42-61-dev/include/features.h:435:4: warning: #warning _FORTIFY_SOURCE requires compiling with optimization (-O) [-Wcpp]
-  435 | #  warning _FORTIFY_SOURCE requires compiling with optimization (-O)
-      |    ^~~~~~~

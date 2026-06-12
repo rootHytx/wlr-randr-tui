@@ -774,14 +774,14 @@ fn main() {
     let monitors = parse_monitors();
     if monitors.is_empty() { eprintln!("No monitors detected."); std::process::exit(1); }
 
-    initscr(); start_color(); cbreak(); noecho();
+    initscr(); start_color(); use_default_colors(); cbreak(); noecho();
     keypad(stdscr(), true);
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 
-    init_pair(CP_NORMAL,    COLOR_WHITE,  COLOR_BLACK);
+    init_pair(CP_NORMAL,    -1,           -1);           // terminal default fg/bg
     init_pair(CP_HEADER,    COLOR_BLACK,  COLOR_CYAN);
     init_pair(CP_SELECTED,  COLOR_BLACK,  COLOR_GREEN);
-    init_pair(CP_MODIFIED,  COLOR_YELLOW, COLOR_BLACK);
+    init_pair(CP_MODIFIED,  COLOR_YELLOW, -1);           // yellow text, transparent bg
     init_pair(CP_STATUSBAR, COLOR_BLACK,  COLOR_WHITE);
     init_pair(CP_ERROR,     COLOR_WHITE,  COLOR_RED);
     init_pair(CP_OVERLAY,   COLOR_BLACK,  COLOR_MAGENTA);
