@@ -8,6 +8,8 @@
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
     in {
+      defaultPackage.${system} = self.packages.${system}.default;
+
       packages.${system}.default = pkgs.rustPlatform.buildRustPackage {
         pname = "wlr-randr-tui";
         version = "0.1.0";
