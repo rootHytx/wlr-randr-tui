@@ -10,33 +10,34 @@ permissions:
 
 jobs:
   build:
-    name: Build release binary
+    name: Build static release binary
     runs-on: ubuntu-latest
+    container:
+      image: alpine:3.21
 
     steps:
+      # JavaScript actions (checkout, release upload) run on the host Ubuntu
+      # runner, not inside Alpine, so git is not needed in the container.
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y libncurses-dev
+      - name: Install build dependencies
+        run: apk add --no-cache cargo rust ncurses-dev ncurses-static musl-dev pkgconf
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Build
+      - name: Build fully static binary
+        env:
+          # Tell the ncurses crate's build script to emit static= link flags
+          PKG_CONFIG_ALL_STATIC: 1
+          # Statically link musl crt (redundant on Alpine but explicit is fine)
+          RUSTFLAGS: -C target-feature=+crt-static
         run: cargo build --release --locked
 
       - name: Strip binary
         run: strip target/release/wlr-randr-tui
+
+      - name: Verify no shared library deps
+        run: |
+          echo "Dynamic deps (expect none beyond linux-vdso):"
+          ldd target/release/wlr-randr-tui || true
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
