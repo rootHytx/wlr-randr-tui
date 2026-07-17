@@ -6,75 +6,99 @@ A terminal UI for configuring monitors on wlroots-based Wayland compositors (nir
 
 ```
  wlr-randr TUI
- Proj: [Extend] [External Only] [Laptop Only] [Custom]  p / , . : cycle
--------------------------------------------------------------------------------
- Monitors              | DP-1
- > [M] DP-1            |   Make:  Dell Inc.
-   [L] eDP-1 *         |   Model: DELL P3425WE
-                       | ------------------------------------------------------
-                       | > Mode:           3440x1440 @ 59.973 Hz (current)
-                       |   Position:       x=0 y=0
-                       |   Scale:          1.0000
-                       |   Transform:      normal
-                       |   Adaptive Sync:  disabled
-                       |   Enabled:        yes
-                       | ------------------------------------------------------
-                       |  Layout:
-                       |  +-----DP-1------+
-                       |  |              |
-                       |  +------+-------+
-                       |       +--eDP-1--+
-                       |       |         |
-                       |       +---------+
--------------------------------------------------------------------------------
- Tab:panel  Up/Dn:nav  Left/Right:cycle  Enter:edit  p:proj  a:apply  r:reset  q:quit
+ [DP-1 ] [eDP-1*]                                              Tab:focus
+------------------------------------------------------------------------
+  DP-1  Dell DELL P3425WE  [external]
+------------------------------------------------------------------------
+ >  Mode:          3440x1440 @ 59.973 Hz (preferred/current)
+    Scale:         1.0000
+    Transform:     normal
+    Adaptive Sync: disabled
+    Enabled:       yes
+------------------------------------------------------------------------
+ Layout  Proj: [Extend] [Ext Only] [Laptop Only] [Custom]  p/,/.:cycle
+ >  eDP-1 (2/2):  Below DP-1 (center)  -> (897, 1440) [*]
+
+    +----------DP-1----------+
+    |                        |
+    +------------+-----------+
+               +--eDP-1--+
+               |         |
+               +---------+
+------------------------------------------------------------------------
+ Up/Dn:monitor  L/R:cycle pos  Enter:type x,y  Tab:tabs  p:proj  a:apply  q:quit
 ```
 
 ## Features
 
-- Browse all connected outputs and their full mode lists
-- Per-output settings: resolution/refresh, position, scale, transform, adaptive sync, enable/disable
-- **Smart relative positioning** — place a monitor relative to another with alignment:
+- **Monitor tabs** — one tab per connected output; switch with `←`/`→` while the tab bar is focused
+- **Per-output settings** — resolution/refresh rate, scale, transform, adaptive sync, enable/disable
+- **Scrollable mode picker** — `Enter` on the Mode field opens a full-screen list of all supported resolutions and refresh rates, with preferred/current markers
+- **Unified layout section** — position configuration is separate from per-monitor settings; one view shows all outputs at once
+- **Smart relative positioning** — place a monitor relative to another with optional centering:
   - `Below DP-1`, `Below DP-1 (center)`, `Right of DP-1 (center)`, etc.
   - Centered alignment computes the exact pixel offset from logical sizes (`resolution ÷ scale`), so a 2880×1800 laptop at scale 1.75 is correctly centered under a 3440×1440 external monitor
   - The resolved absolute coordinates are shown live before you apply
-- **Layout preview** — ASCII diagram of all outputs at their computed positions, updates in real time as you change settings
+- **Live layout diagram** — ASCII box diagram of all outputs at their computed positions, updates in real time
 - **Projection presets** — one keypress to switch between common configurations:
   - `Extend` — all outputs on, external at origin, laptop centered below
-  - `External Only` — laptop screen off
+  - `Ext Only` — laptop screen off
   - `Laptop Only` — external screen off
   - `Custom` — individual settings
-- Scrollable mode picker (Enter on Mode field) showing all available resolutions and refresh rates with preferred/current markers
-- All pending changes marked with `[*]`; reset per-output with `r`
-- Changes applied atomically via a single `wlr-randr` invocation
+- Pending changes marked with `[*]`; reset per-output with `r`
+- Changes applied atomically via a single `wlr-randr` invocation; full layout always sent to avoid compositor reflow
 
 ## Requirements
 
 - `wlr-randr` in `$PATH`
 - A wlroots-based Wayland compositor
-- `ncurses` (runtime)
 
-> **Note on output duplication ("Mirror"):** The `wlr-output-management` protocol has no concept of framebuffer cloning. Duplicate/mirror mode is not achievable through `wlr-randr` and is not implemented.
+> **Note on mirroring:** The `wlr-output-management` protocol has no concept of framebuffer cloning. Duplicate/mirror mode is not achievable through `wlr-randr` and is not implemented.
 
-## Building
+## Installation
 
-### NixOS
+### NixOS flake
 
-```bash
-nix-shell --run "cargo build --release"
+Add to your flake inputs:
+
+```nix
+inputs.wlr-randr-tui.url = "github:youruser/wlr-randr-tui";
 ```
 
-A `shell.nix` is included with all required dependencies.
+Then include the package:
 
-### Other distros
+```nix
+environment.systemPackages = [
+  inputs.wlr-randr-tui.packages.${pkgs.system}.default
+];
+```
+
+### Pre-built static binary
+
+Download the latest binary from the [Releases](../../releases) page. The binary is fully statically linked (musl) and has no runtime dependencies.
 
 ```bash
-# Arch
+chmod +x wlr-randr-tui
+./wlr-randr-tui
+```
+
+### Build from source
+
+**NixOS / nix:**
+```bash
+nix develop
+cargo build --release
+```
+
+**Arch:**
+```bash
 sudo pacman -S rust ncurses
+cargo build --release
+```
 
-# Debian/Ubuntu
+**Debian / Ubuntu:**
+```bash
 sudo apt install cargo libncurses-dev
-
 cargo build --release
 ```
 
@@ -86,14 +110,24 @@ Binary will be at `target/release/wlr-randr-tui`.
 wlr-randr-tui
 ```
 
+### Navigation
+
+The UI has three focus areas cycled with `Tab`:
+
+| Focus | What it controls |
+|-------|-----------------|
+| **Tabs** (top bar) | Switch between monitors with `←`/`→` |
+| **Settings** (middle) | Per-monitor fields: mode, scale, transform, adaptive sync, enabled |
+| **Layout** (bottom) | Position of each monitor relative to others; projection presets |
+
 ### Keybindings
 
 | Key | Action |
 |-----|--------|
-| `Tab` | Switch between monitor list and settings panel |
-| `↑` / `↓` | Navigate monitors or settings fields |
-| `←` / `→` | Cycle through values (mode, position, scale, transform, etc.) |
-| `Enter` | Open mode picker (on Mode field), enter text input (Position, Scale), or toggle (Adaptive Sync, Enabled) |
+| `Tab` | Cycle focus: Settings → Layout → Tabs |
+| `↑` / `↓` | Navigate fields (Settings) or select monitor (Layout) |
+| `←` / `→` | Switch monitor tab (Tabs), cycle values (Settings), cycle position (Layout) |
+| `Enter` | Open mode picker (Mode field), enter text input (Scale), toggle boolean fields, type raw `x,y` (Layout) |
 | `Esc` | Cancel edit / close mode picker |
 | `p` or `.` | Cycle projection preset forward |
 | `,` | Cycle projection preset backward |
@@ -101,16 +135,19 @@ wlr-randr-tui
 | `r` | Reset pending changes for the selected monitor |
 | `q` | Quit |
 
-### Position field
+### Layout section — positions
 
-- `←` / `→` cycles through relative options: `Below X`, `Below X (center)`, `Right of X`, `Right of X (center)`, `Above X`, `Above X (center)`, `Left of X`, `Left of X (center)`, and your current absolute coordinates
+- `↑`/`↓` selects which monitor's position to edit (it becomes highlighted in the diagram)
+- `←`/`→` cycles through options: `Below X`, `Below X (center)`, `Right of X`, `Right of X (center)`, `Above X`, `Above X (center)`, `Left of X`, `Left of X (center)`, and the current absolute coordinates
 - `Enter` opens a text prompt for a raw `x,y` value (e.g. `3440,0`)
-- The computed absolute pixel position is shown inline, e.g. `Below DP-1 (center)  -> (897, 1440)`
+- The resolved absolute position is always shown inline, e.g. `Below DP-1 (center)  -> (897, 1440)`
 
 ### Mode picker
 
-Press `Enter` on the **Mode** field to open a scrollable list of all supported resolutions and refresh rates. Preferred and currently active modes are marked. Navigate with `↑`/`↓`, confirm with `Enter`, cancel with `Esc`.
+Press `Enter` on the **Mode** field to open a scrollable list of all supported resolutions and refresh rates. Navigate with `↑`/`↓`, confirm with `Enter`, cancel with `Esc`.
 
 ## How it works
 
-Settings are staged locally and only sent when you press `a`. The final `wlr-randr` command is shown in the status bar on success. Relative positions are resolved to absolute coordinates at apply time using each monitor's logical size (`mode pixels ÷ scale factor`), so centering accounts for HiDPI scaling correctly.
+Settings are staged locally and only sent when you press `a`. On apply, the complete layout (all outputs with their resolved positions) is sent to `wlr-randr` in a single atomic call — partial updates are never used, which prevents the compositor from reflowing the layout unexpectedly.
+
+Relative positions are resolved to absolute coordinates at apply time using each monitor's logical size (`mode pixels ÷ scale factor`), so centering accounts for HiDPI scaling correctly.
