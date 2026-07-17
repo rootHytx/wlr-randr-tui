@@ -3,31 +3,8 @@
 A terminal UI for configuring monitors on wlroots-based Wayland compositors (niri, sway, Hyprland, Wayfire, etc.) using `wlr-randr`.
 
 ## Screenshot
+<img width="2291" height="1734" alt="image" src="https://github.com/user-attachments/assets/cfbfbc2b-57bf-4149-9037-72799aaed1f8" />
 
-```
- wlr-randr TUI
- [DP-1 ] [eDP-1*]                                              Tab:focus
-------------------------------------------------------------------------
-  DP-1  Dell DELL P3425WE  [external]
-------------------------------------------------------------------------
- >  Mode:          3440x1440 @ 59.973 Hz (preferred/current)
-    Scale:         1.0000
-    Transform:     normal
-    Adaptive Sync: disabled
-    Enabled:       yes
-------------------------------------------------------------------------
- Layout  Proj: [Extend] [Ext Only] [Laptop Only] [Custom]  p/,/.:cycle
- >  eDP-1 (2/2):  Below DP-1 (center)  -> (897, 1440) [*]
-
-    +----------DP-1----------+
-    |                        |
-    +------------+-----------+
-               +--eDP-1--+
-               |         |
-               +---------+
-------------------------------------------------------------------------
- Up/Dn:monitor  L/R:cycle pos  Enter:type x,y  Tab:tabs  p:proj  a:apply  q:quit
-```
 
 ## Features
 
