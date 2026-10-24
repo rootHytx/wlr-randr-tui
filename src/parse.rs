@@ -22,6 +22,8 @@ pub fn parse_output(text: &str) -> Vec<Monitor> {
             None => continue,
         };
         let (mut make, mut model) = (String::new(), String::new());
+        let mut serial = String::new();
+        let mut physical_size = (0u32, 0u32);
         let mut enabled = true;
         let mut modes: Vec<Mode> = Vec::new();
         let mut pos = (0i32, 0i32);
@@ -42,6 +44,16 @@ pub fn parse_output(text: &str) -> Vec<Monitor> {
                 in_modes = false;
             } else if t.starts_with("Model: ") {
                 model = t["Model: ".len()..].to_string();
+                in_modes = false;
+            } else if t.starts_with("Serial: ") {
+                serial = t["Serial: ".len()..].trim().to_string();
+                in_modes = false;
+            } else if t.starts_with("Physical size: ") {
+                let s = &t["Physical size: ".len()..];
+                let s = s.split_whitespace().next().unwrap_or("");
+                if let Some((w, h)) = s.split_once('x') {
+                    physical_size = (w.parse().unwrap_or(0), h.parse().unwrap_or(0));
+                }
                 in_modes = false;
             } else if t.starts_with("Enabled: ") {
                 enabled = t.ends_with("yes");
@@ -80,6 +92,8 @@ pub fn parse_output(text: &str) -> Vec<Monitor> {
             name,
             make,
             model,
+            serial,
+            physical_size,
             enabled,
             modes,
             cur_mode: cur,

@@ -24,6 +24,7 @@ A terminal UI for configuring monitors on wlroots-based Wayland compositors (nir
   - `Custom` — individual settings
 - Pending changes marked with `[*]`; reset per-output with `r`
 - Changes applied atomically via a single `wlr-randr` invocation; full layout always sent to avoid compositor reflow
+- **Persistent profiles** — settings are saved automatically on apply and re-applied on startup, keyed by the monitor's hardware identity (EDID make/model/serial, physical size as fallback) instead of the connector name, so they survive reboots and `DP-1` ↔ `DP-2` renumbering
 
 ## Requirements
 
@@ -87,6 +88,8 @@ Binary will be at `target/release/wlr-randr-tui`.
 wlr-randr-tui
 ```
 
+Saved profiles are applied automatically at startup. Pass `--no-restore` (or `-n`) to start from the compositor's current state instead.
+
 ### Navigation
 
 The UI has three focus areas cycled with `Tab`:
@@ -108,8 +111,9 @@ The UI has three focus areas cycled with `Tab`:
 | `Esc` | Cancel edit / close mode picker |
 | `p` or `.` | Cycle projection preset forward |
 | `,` | Cycle projection preset backward |
-| `a` | Apply all pending changes |
+| `a` | Apply all pending changes and save the resulting profiles |
 | `r` | Reset pending changes for the selected monitor |
+| `d` | Forget the saved profile for the selected monitor |
 | `q` | Quit |
 
 ### Layout section — positions
@@ -128,3 +132,21 @@ Press `Enter` on the **Mode** field to open a scrollable list of all supported r
 Settings are staged locally and only sent when you press `a`. On apply, the complete layout (all outputs with their resolved positions) is sent to `wlr-randr` in a single atomic call — partial updates are never used, which prevents the compositor from reflowing the layout unexpectedly.
 
 Relative positions are resolved to absolute coordinates at apply time using each monitor's logical size (`mode pixels ÷ scale factor`), so centering accounts for HiDPI scaling correctly.
+
+## Persistence
+
+Every successful apply that had pending changes writes the resulting settings of all connected outputs to:
+
+```
+$XDG_CONFIG_HOME/wlr-randr-tui/config    # or ~/.config/wlr-randr-tui/config
+```
+
+Set `WLR_RANDR_TUI_CONFIG` to use a different file. The format is a plain-text, hand-editable list of `[monitor]` blocks.
+
+Each block is keyed by a stable hardware identity derived from the EDID make, model and serial number. When the serial is missing or a placeholder (`0x00000000`, `00000000`, ...), the physical size is used instead; if that is missing too, make and model alone identify the output. Only outputs with no EDID data at all (headless/virtual) fall back to the connector name. The connector name is stored for readability but is not part of the key, so unplugging, docking, or rebooting does not change which profile applies.
+
+At startup the matching profiles are restored and applied in a single `wlr-randr` call. Stale values are skipped rather than sent blindly: a mode the monitor no longer advertises or an unknown transform leaves that field untouched while the rest is applied. Positions are stored as the resolved absolute coordinates.
+
+Entries for monitors that are not connected at save time are kept, so profiles for different docking stations coexist. `d` removes the profile for the selected output; apply again to recreate it.
+
+Limitation: two identical monitors with no usable serial number and the same physical size share a single profile. The `wlr-output-management` protocol does not expose anything else that would distinguish them.

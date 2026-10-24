@@ -374,7 +374,7 @@ pub fn draw_statusbar(app: &App, rows: i32, cols: i32) {
                 " L/R:switch tab  Down/Tab:settings  a:apply  r:reset  q:quit".to_string()
             }
             (_, Section::Settings) => {
-                " Up/Dn:field  L/R:cycle  Enter:edit  Tab:layout  a:apply  r:reset  q:quit"
+                " Up/Dn:field  L/R:cycle  Enter:edit  Tab:layout  a:apply  r:reset  d:forget  q:quit"
                     .to_string()
             }
             (_, Section::Layout) => {

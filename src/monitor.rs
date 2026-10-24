@@ -1,6 +1,6 @@
 use crate::consts::*;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Align {
     Start,
     Center,
@@ -18,7 +18,7 @@ impl Align {
 /// Relative positions carry an alignment on the perpendicular axis:
 ///   RightOf / LeftOf → align vertically (top vs. centered)
 ///   Above   / Below  → align horizontally (left vs. centered)
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum PosMode {
     RightOf(String, Align),
     LeftOf(String, Align),
@@ -153,6 +153,11 @@ pub struct Monitor {
     pub name: String,
     pub make: String,
     pub model: String,
+    /// EDID serial number, when the connector/driver reports one.
+    pub serial: String,
+    /// Physical size in millimetres, used as an identity fallback when the
+    /// serial number is missing or a placeholder.
+    pub physical_size: (u32, u32),
     pub enabled: bool,
     pub modes: Vec<Mode>,
     pub cur_mode: usize,
